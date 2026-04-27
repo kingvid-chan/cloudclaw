@@ -1,0 +1,42 @@
+# Cloud 接入 OpenClaw runtime 的 Compose override
+# 由 .cloudclaw/start.sh 显式 -f 加载,docker-setup.sh 默认不会读到
+# 仅在 .cloudclaw/ 内写入(AGENTS.md §3.2 合规)
+#
+# 设计:bind mount 划分为三类
+#   ro 单文件: 4 个人格档案(SOUL/USER/AGENTS/HEARTBEAT) -- 来自 private repo,agent 不能改人格
+#   ro 目录:   ~/人生系统/(读视图) + Gemini CLI(provider) -- agent 只读
+#   rw 目录:   3 个 Cloud 产出区(对话纪要/周度报告/提案) -- agent 可写,但 git commit 由 Sky
+services:
+  openclaw-gateway:
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      # 4 个人格档案(read-only,Cloud 不改自身人格)
+      - "${CLOUDCLAW_PRIVATE_DIR}/SOUL.md:/home/node/.openclaw/workspace/SOUL.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/USER.md:/home/node/.openclaw/workspace/USER.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/AGENTS.md:/home/node/.openclaw/workspace/AGENTS.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
+      # Gemini CLI provider (host npm package + Cloud-owned wrapper)
+      - "/Users/chenqingwei/.nvm/versions/node/v20.19.3/lib/node_modules/@google/gemini-cli:/opt/gemini-cli:ro"
+      - "/Users/chenqingwei/人生系统/Agentic Cowork/cloudclaw/.cloudclaw/gemini-wrapper.sh:/usr/local/bin/gemini:ro"
+      # Sky 的人生系统档案(read-only,AGENTS.md §3.1 读边界 + §3.2/§4 写禁止)
+      - "/Users/chenqingwei/人生系统:/home/node/.openclaw/workspace/人生系统:ro"
+      # Cloud 产出区(read-write,Cloud 自治写入,Sky 来 git commit)
+      - "${CLOUDCLAW_PRIVATE_DIR}/对话纪要:/home/node/.openclaw/workspace/对话纪要:rw"
+      - "${CLOUDCLAW_PRIVATE_DIR}/周度报告:/home/node/.openclaw/workspace/周度报告:rw"
+      - "${CLOUDCLAW_PRIVATE_DIR}/提案:/home/node/.openclaw/workspace/提案:rw"
+
+  openclaw-cli:
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+      - "${CLOUDCLAW_PRIVATE_DIR}/SOUL.md:/home/node/.openclaw/workspace/SOUL.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/USER.md:/home/node/.openclaw/workspace/USER.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/AGENTS.md:/home/node/.openclaw/workspace/AGENTS.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
+      - "/Users/chenqingwei/.nvm/versions/node/v20.19.3/lib/node_modules/@google/gemini-cli:/opt/gemini-cli:ro"
+      - "/Users/chenqingwei/人生系统/Agentic Cowork/cloudclaw/.cloudclaw/gemini-wrapper.sh:/usr/local/bin/gemini:ro"
+      - "/Users/chenqingwei/人生系统:/home/node/.openclaw/workspace/人生系统:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/对话纪要:/home/node/.openclaw/workspace/对话纪要:rw"
+      - "${CLOUDCLAW_PRIVATE_DIR}/周度报告:/home/node/.openclaw/workspace/周度报告:rw"
+      - "${CLOUDCLAW_PRIVATE_DIR}/提案:/home/node/.openclaw/workspace/提案:rw"

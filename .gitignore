@@ -107,6 +107,16 @@ package-lock.json
 .agent/
 skills-lock.json
 
+# CloudClaw private state lives outside the public OpenClaw fork. Existing
+# tracked files must still be removed from the index before this fully applies.
+.cloudclaw/SOUL.md
+.cloudclaw/USER.md
+.cloudclaw/AGENTS.md
+.cloudclaw/HEARTBEAT.md
+.cloudclaw/对话纪要/*
+.cloudclaw/周度报告/*
+.cloudclaw/提案/*
+
 # Local iOS signing overrides
 apps/ios/LocalSigning.xcconfig
 

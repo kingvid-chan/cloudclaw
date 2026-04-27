@@ -1,0 +1,14 @@
+memory/*
+
+# Private Cloud state. Keep these in cloudclaw-private, not in the public
+# OpenClaw fork.
+SOUL.md
+USER.md
+AGENTS.md
+HEARTBEAT.md
+对话纪要/*
+周度报告/*
+提案/*
+*.log
+*.tmp
+.DS_Store
