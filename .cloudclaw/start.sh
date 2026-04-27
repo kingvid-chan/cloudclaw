@@ -1,22 +1,67 @@
 #!/usr/bin/env bash
 # Cloud 接入版的 OpenClaw 启动包装
 # 显式叠加 .cloudclaw/docker-compose.override.yml,使 agent 启动读到 Cloud 人格
-# 用法: ./.cloudclaw/start.sh {up|down|tui|logs|status|restart|recreate|yolo-tui}
+# 用法: ./.cloudclaw/start.sh {up|down|tui|logs|status|config|restart|recreate|yolo-tui}
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+WORKSPACE_DIR="$(cd "$ROOT_DIR/.." && pwd)"
 BASE="$ROOT_DIR/docker-compose.yml"
 OVERRIDE="$SCRIPT_DIR/docker-compose.override.yml"
 
 if [[ ! -f "$BASE" ]];     then echo "missing $BASE" >&2; exit 1; fi
 if [[ ! -f "$OVERRIDE" ]]; then echo "missing $OVERRIDE" >&2; exit 1; fi
 
-export CLOUDCLAW_PRIVATE_DIR="${CLOUDCLAW_PRIVATE_DIR:-$ROOT_DIR/../cloudclaw-private/.cloudclaw}"
-if [[ ! -d "$CLOUDCLAW_PRIVATE_DIR" ]]; then
-  echo "missing private Cloud state dir: $CLOUDCLAW_PRIVATE_DIR" >&2
-  exit 1
+if [[ -f "$SCRIPT_DIR/env.local" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$SCRIPT_DIR/env.local"
+  set +a
 fi
+
+resolve_gemini_cli_dir() {
+  if [[ -n "${CLOUDCLAW_GEMINI_CLI_DIR:-}" ]]; then
+    printf '%s\n' "$CLOUDCLAW_GEMINI_CLI_DIR"
+    return
+  fi
+
+  local npm_root=""
+  npm_root="$(npm root -g 2>/dev/null || true)"
+  if [[ -n "$npm_root" && -d "$npm_root/@google/gemini-cli" ]]; then
+    printf '%s\n' "$npm_root/@google/gemini-cli"
+    return
+  fi
+
+  local nvm_candidate
+  for nvm_candidate in "$HOME"/.nvm/versions/node/*/lib/node_modules/@google/gemini-cli; do
+    if [[ -d "$nvm_candidate" ]]; then
+      printf '%s\n' "$nvm_candidate"
+      return
+    fi
+  done
+
+  echo "missing Gemini CLI package dir; set CLOUDCLAW_GEMINI_CLI_DIR" >&2
+  exit 1
+}
+
+export CLOUDCLAW_PRIVATE_DIR="${CLOUDCLAW_PRIVATE_DIR:-$WORKSPACE_DIR/cloudclaw-private/.cloudclaw}"
+export CLOUDCLAW_WRAPPER_PATH="${CLOUDCLAW_WRAPPER_PATH:-$SCRIPT_DIR/gemini-wrapper.sh}"
+export CLOUDCLAW_LIFE_SYSTEM_DIR="${CLOUDCLAW_LIFE_SYSTEM_DIR:-$(cd "$WORKSPACE_DIR/.." && pwd)}"
+export CLOUDCLAW_LIFE_SYSTEM_MOUNT="${CLOUDCLAW_LIFE_SYSTEM_MOUNT:-/home/node/.openclaw/workspace/人生系统}"
+export CLOUDCLAW_GEMINI_HOME_DIR="${CLOUDCLAW_GEMINI_HOME_DIR:-$HOME/.gemini}"
+export CLOUDCLAW_GEMINI_CLI_DIR="$(resolve_gemini_cli_dir)"
+
+for required_path in \
+  "$CLOUDCLAW_PRIVATE_DIR" \
+  "$CLOUDCLAW_WRAPPER_PATH" \
+  "$CLOUDCLAW_LIFE_SYSTEM_DIR" \
+  "$CLOUDCLAW_GEMINI_CLI_DIR"; do
+  if [[ ! -e "$required_path" ]]; then
+    echo "missing required CloudClaw path: $required_path" >&2
+    exit 1
+  fi
+done
 
 cd "$ROOT_DIR"
 COMPOSE=(docker compose --env-file "$ROOT_DIR/.env" -f "$BASE" -f "$OVERRIDE")
@@ -48,8 +93,11 @@ case "${1:-status}" in
   status)
     "${COMPOSE[@]}" ps
     ;;
+  config)
+    "${COMPOSE[@]}" config --quiet
+    ;;
   *)
-    echo "Usage: $0 {up|down|tui|logs|status|restart|recreate|yolo-tui}" >&2
+    echo "Usage: $0 {up|down|tui|logs|status|config|restart|recreate|yolo-tui}" >&2
     exit 1
     ;;
 esac
