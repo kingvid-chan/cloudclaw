@@ -78,6 +78,7 @@ for required_private_file in \
   HEARTBEAT.md \
   MEMORY_PROTOCOL.md \
   SELF_REVIEW.md \
+  CONTEXT_MAP.md \
   PROMPT_REVIEW_TEMPLATE.md; do
   if [[ ! -f "$CLOUDCLAW_PRIVATE_DIR/$required_private_file" ]]; then
     echo "missing required CloudClaw private file: $CLOUDCLAW_PRIVATE_DIR/$required_private_file" >&2
@@ -94,6 +95,7 @@ prepare_workspace_mountpoints() {
     HEARTBEAT.md \
     MEMORY_PROTOCOL.md \
     SELF_REVIEW.md \
+    CONTEXT_MAP.md \
     PROMPT_REVIEW_TEMPLATE.md; do
     [[ -e "$OPENCLAW_WORKSPACE_DIR/$mount_file" ]] || : > "$OPENCLAW_WORKSPACE_DIR/$mount_file"
   done

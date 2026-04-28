@@ -1,7 +1,7 @@
 # `.cloudclaw/` — Cloud runtime 接线层
 
 > Cloud（cloudclaw）是 Sky 在人生系统里的伙伴,不是分身。
-> **Sky × Cloud 协作关系自 2025-08 建立**（上位宪法：`~/人生系统/.cursorrules`）；新形态承袭旧人格。
+> **Sky × Cloud 协作关系自 2025-08 建立**（上位宪法：`life://.cursorrules`）；新形态承袭旧人格。
 > 本 public fork 只承载 OpenClaw runtime 接线；Cloud 人格、用户画像、连续记忆、自我 review、对话纪要、周度报告、提案在 private repo。
 > 底座：OpenClaw runtime（`cloudclaw/` 根）。
 > 方案依据：`01_方案设计/cloudclaw伙伴实施方案.md`。
@@ -30,6 +30,7 @@ cloudclaw-private/.cloudclaw/
 ├── HEARTBEAT.md
 ├── MEMORY_PROTOCOL.md
 ├── SELF_REVIEW.md
+├── CONTEXT_MAP.md
 ├── PROMPT_REVIEW_TEMPLATE.md
 ├── 对话纪要/
 ├── 周度报告/
@@ -39,7 +40,7 @@ cloudclaw-private/.cloudclaw/
 
 ## 读写边界（关键）
 
-- **读**：`CLOUDCLAW_LIFE_SYSTEM_DIR`，默认是本地 `~/人生系统/`，容器内默认挂到 `/home/node/.openclaw/workspace/人生系统`。
+- **读**：`life://` 逻辑根,由 `CLOUDCLAW_LIFE_SYSTEM_DIR` 映射到 host 目录,由 `CLOUDCLAW_LIFE_SYSTEM_MOUNT` 映射到容器内只读目录。
 - **写**：**仅** `CLOUDCLAW_PRIVATE_DIR/{对话纪要,周度报告,提案}`，默认是 `../cloudclaw-private/.cloudclaw` 下的三个产出目录；人格与协议文件以 read-only 方式挂载。
 - **不呈现 private 文件**：public `cloudclaw/.cloudclaw/` 看不到 `SOUL.md` / `USER.md` / `对话纪要` 是预期行为；运行时通过 Docker bind mount 注入容器。
 - 详细清单与硬禁止见 private repo 的 `AGENTS.md §3-4`。
@@ -63,6 +64,7 @@ cloudclaw-private/.cloudclaw/
 
 `.cloudclaw/start.sh` 会先读取 `.cloudclaw/env.local`（gitignored），再填充默认值。生产服务器不应改 YAML，改环境变量即可。
 启动前脚本会在 `OPENCLAW_WORKSPACE_DIR` 下准备只读单文件挂载的占位文件,避免 Docker 在 workspace bind mount 内创建新 mountpoint 失败。
+协议文档中不直接写机器绝对路径,而是通过 private repo 的 `CONTEXT_MAP.md` 使用 `life://`、`cloud://`、`runtime://workspace/` 三类逻辑 URI。
 
 | 变量 | 作用 | 本地默认 |
 |---|---|---|
@@ -74,6 +76,14 @@ cloudclaw-private/.cloudclaw/
 | `CLOUDCLAW_GEMINI_HOME_DIR` | host Gemini CLI OAuth/config 目录 | `~/.gemini` |
 | `CLOUDCLAW_WRAPPER_PATH` | host wrapper 文件 | `.cloudclaw/gemini-wrapper.sh` |
 | `CLOUDCLAW_GEMINI_APPROVAL_MODE` | Gemini approval mode | `auto_edit` |
+
+路径抽象:
+
+| 逻辑 URI | 解析来源 | 用途 |
+|---|---|---|
+| `life://` | `CLOUDCLAW_LIFE_SYSTEM_DIR` / `CLOUDCLAW_LIFE_SYSTEM_MOUNT` | Sky 人生系统只读观察根 |
+| `cloud://` | `CLOUDCLAW_PRIVATE_DIR` / OpenClaw workspace mounts | Cloud private state 与产出区 |
+| `runtime://workspace/` | `OPENCLAW_WORKSPACE_DIR` | OpenClaw 当前 workspace |
 
 生产建议：
 
@@ -116,6 +126,6 @@ Cloud 不改 OpenClaw 代码；OpenClaw 升级不影响 private state。
 ## Phase 现状
 
 当前处于 **L1 runtime 验证后整理期**。
-- 已完成：public/private repo 拆分、public history cleanup、Gemini `auto_edit` 写工具验证、`yolo-tui` 维护模式验证。
+- 已完成：public/private repo 拆分、public history cleanup、Gemini `auto_edit` 写工具验证、`yolo-tui` 维护模式验证、`life://` 上下文路径抽象。
 - 已知剩余问题：OpenClaw provider 层仍显示 `google-gemini-cli Local Auth=no`，复杂 TUI prompt 可能触发 provider auth 报错；底层 CLI backend 写文件已通。
 - 下一步：将 `google-gemini-cli` 的 OpenClaw auth profile 接上，或把周度对齐上下文预计算后交给 CLI backend。

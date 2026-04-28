@@ -3,7 +3,7 @@
 # 仅在 .cloudclaw/ 内写入(AGENTS.md §3.2 合规)
 #
 # 设计:bind mount 划分为三类
-#   ro 单文件: 人格档案与协议(SOUL/USER/AGENTS/HEARTBEAT/MEMORY_PROTOCOL/SELF_REVIEW/PROMPT_REVIEW_TEMPLATE)
+#   ro 单文件: 人格档案与协议(SOUL/USER/AGENTS/HEARTBEAT/MEMORY_PROTOCOL/SELF_REVIEW/CONTEXT_MAP/PROMPT_REVIEW_TEMPLATE)
 #   ro 目录:   CLOUDCLAW_LIFE_SYSTEM_DIR + Gemini CLI(provider) -- agent 只读
 #   rw 目录:   3 个 Cloud 产出区(对话纪要/周度报告/提案) -- agent 可写,但 git commit 由 Sky
 services:
@@ -18,6 +18,7 @@ services:
       - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/MEMORY_PROTOCOL.md:/home/node/.openclaw/workspace/MEMORY_PROTOCOL.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/SELF_REVIEW.md:/home/node/.openclaw/workspace/SELF_REVIEW.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/CONTEXT_MAP.md:/home/node/.openclaw/workspace/CONTEXT_MAP.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/PROMPT_REVIEW_TEMPLATE.md:/home/node/.openclaw/workspace/PROMPT_REVIEW_TEMPLATE.md:ro"
       # Gemini CLI provider (host npm package + Cloud-owned wrapper)
       - "${CLOUDCLAW_GEMINI_CLI_DIR}:/opt/gemini-cli:ro"
@@ -39,6 +40,7 @@ services:
       - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/MEMORY_PROTOCOL.md:/home/node/.openclaw/workspace/MEMORY_PROTOCOL.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/SELF_REVIEW.md:/home/node/.openclaw/workspace/SELF_REVIEW.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/CONTEXT_MAP.md:/home/node/.openclaw/workspace/CONTEXT_MAP.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/PROMPT_REVIEW_TEMPLATE.md:/home/node/.openclaw/workspace/PROMPT_REVIEW_TEMPLATE.md:ro"
       - "${CLOUDCLAW_GEMINI_CLI_DIR}:/opt/gemini-cli:ro"
       - "${CLOUDCLAW_WRAPPER_PATH}:/usr/local/bin/gemini:ro"
