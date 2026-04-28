@@ -2,7 +2,7 @@
 
 > Cloud（cloudclaw）是 Sky 在人生系统里的伙伴,不是分身。
 > **Sky × Cloud 协作关系自 2025-08 建立**（上位宪法：`~/人生系统/.cursorrules`）；新形态承袭旧人格。
-> 本 public fork 只承载 OpenClaw runtime 接线；Cloud 人格、用户画像、对话纪要、周度报告、提案在 private repo。
+> 本 public fork 只承载 OpenClaw runtime 接线；Cloud 人格、用户画像、连续记忆、自我 review、对话纪要、周度报告、提案在 private repo。
 > 底座：OpenClaw runtime（`cloudclaw/` 根）。
 > 方案依据：`01_方案设计/cloudclaw伙伴实施方案.md`。
 
@@ -28,6 +28,9 @@ cloudclaw-private/.cloudclaw/
 ├── USER.md
 ├── AGENTS.md
 ├── HEARTBEAT.md
+├── MEMORY_PROTOCOL.md
+├── SELF_REVIEW.md
+├── PROMPT_REVIEW_TEMPLATE.md
 ├── 对话纪要/
 ├── 周度报告/
 ├── 提案/
@@ -37,7 +40,7 @@ cloudclaw-private/.cloudclaw/
 ## 读写边界（关键）
 
 - **读**：`CLOUDCLAW_LIFE_SYSTEM_DIR`，默认是本地 `~/人生系统/`，容器内默认挂到 `/home/node/.openclaw/workspace/人生系统`。
-- **写**：**仅** `CLOUDCLAW_PRIVATE_DIR/{对话纪要,周度报告,提案}`，默认是 `../cloudclaw-private/.cloudclaw` 下的三个产出目录。
+- **写**：**仅** `CLOUDCLAW_PRIVATE_DIR/{对话纪要,周度报告,提案}`，默认是 `../cloudclaw-private/.cloudclaw` 下的三个产出目录；人格与协议文件以 read-only 方式挂载。
 - **不呈现 private 文件**：public `cloudclaw/.cloudclaw/` 看不到 `SOUL.md` / `USER.md` / `对话纪要` 是预期行为；运行时通过 Docker bind mount 注入容器。
 - 详细清单与硬禁止见 private repo 的 `AGENTS.md §3-4`。
 
@@ -51,7 +54,7 @@ cloudclaw-private/.cloudclaw/
 ## 仓库与隐私边界
 
 - `cloudclaw/` 作为 OpenClaw fork，只承载可公开的 runtime patch、模板和说明。
-- `.cloudclaw/对话纪要/`、`.cloudclaw/周度报告/`、`.cloudclaw/提案/` 以及含有 Sky 个人画像的文件，已迁入 `git@github.com:kingvid-chan/cloudclaw-private.git`。
+- `.cloudclaw/对话纪要/`、`.cloudclaw/周度报告/`、`.cloudclaw/提案/`、`USER.md`、`MEMORY_PROTOCOL.md`、`SELF_REVIEW.md` 等私有文件，已迁入 `git@github.com:kingvid-chan/cloudclaw-private.git`。
 - 公共 fork 通过 `CLOUDCLAW_PRIVATE_DIR` 引用 private repo；`.cloudclaw/start.sh` 默认指向 `../cloudclaw-private/.cloudclaw`。
 - 合并 OpenClaw upstream 时只动公共 fork；private repo 不参与 upstream merge,只提供 runtime state。
 - 2026-04-27 已对 public fork main 做 history cleanup；后续不得把 private 正文重新加入 public fork。
@@ -59,9 +62,11 @@ cloudclaw-private/.cloudclaw/
 ## 部署配置变量
 
 `.cloudclaw/start.sh` 会先读取 `.cloudclaw/env.local`（gitignored），再填充默认值。生产服务器不应改 YAML，改环境变量即可。
+启动前脚本会在 `OPENCLAW_WORKSPACE_DIR` 下准备只读单文件挂载的占位文件,避免 Docker 在 workspace bind mount 内创建新 mountpoint 失败。
 
 | 变量 | 作用 | 本地默认 |
 |---|---|---|
+| `OPENCLAW_HOST_BIND_ADDR` | host 端口监听地址 | `127.0.0.1` |
 | `CLOUDCLAW_PRIVATE_DIR` | private state repo 的 `.cloudclaw` 目录 | `../cloudclaw-private/.cloudclaw` |
 | `CLOUDCLAW_LIFE_SYSTEM_DIR` | Cloud 只读观察根目录 | `Agentic Cowork/..` |
 | `CLOUDCLAW_LIFE_SYSTEM_MOUNT` | 容器内观察根目录挂载点 | `/home/node/.openclaw/workspace/人生系统` |

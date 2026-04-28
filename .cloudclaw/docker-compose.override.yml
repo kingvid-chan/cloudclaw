@@ -3,7 +3,7 @@
 # 仅在 .cloudclaw/ 内写入(AGENTS.md §3.2 合规)
 #
 # 设计:bind mount 划分为三类
-#   ro 单文件: 4 个人格档案(SOUL/USER/AGENTS/HEARTBEAT) -- 来自 private repo,agent 不能改人格
+#   ro 单文件: 人格档案与协议(SOUL/USER/AGENTS/HEARTBEAT/MEMORY_PROTOCOL/SELF_REVIEW/PROMPT_REVIEW_TEMPLATE)
 #   ro 目录:   CLOUDCLAW_LIFE_SYSTEM_DIR + Gemini CLI(provider) -- agent 只读
 #   rw 目录:   3 个 Cloud 产出区(对话纪要/周度报告/提案) -- agent 可写,但 git commit 由 Sky
 services:
@@ -11,11 +11,14 @@ services:
     volumes:
       - ${OPENCLAW_CONFIG_DIR}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
-      # 4 个人格档案(read-only,Cloud 不改自身人格)
+      # 人格档案与协议(read-only,Cloud 不改自身人格 / 规则)
       - "${CLOUDCLAW_PRIVATE_DIR}/SOUL.md:/home/node/.openclaw/workspace/SOUL.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/USER.md:/home/node/.openclaw/workspace/USER.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/AGENTS.md:/home/node/.openclaw/workspace/AGENTS.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/MEMORY_PROTOCOL.md:/home/node/.openclaw/workspace/MEMORY_PROTOCOL.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/SELF_REVIEW.md:/home/node/.openclaw/workspace/SELF_REVIEW.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/PROMPT_REVIEW_TEMPLATE.md:/home/node/.openclaw/workspace/PROMPT_REVIEW_TEMPLATE.md:ro"
       # Gemini CLI provider (host npm package + Cloud-owned wrapper)
       - "${CLOUDCLAW_GEMINI_CLI_DIR}:/opt/gemini-cli:ro"
       - "${CLOUDCLAW_WRAPPER_PATH}:/usr/local/bin/gemini:ro"
@@ -34,6 +37,9 @@ services:
       - "${CLOUDCLAW_PRIVATE_DIR}/USER.md:/home/node/.openclaw/workspace/USER.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/AGENTS.md:/home/node/.openclaw/workspace/AGENTS.md:ro"
       - "${CLOUDCLAW_PRIVATE_DIR}/HEARTBEAT.md:/home/node/.openclaw/workspace/HEARTBEAT.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/MEMORY_PROTOCOL.md:/home/node/.openclaw/workspace/MEMORY_PROTOCOL.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/SELF_REVIEW.md:/home/node/.openclaw/workspace/SELF_REVIEW.md:ro"
+      - "${CLOUDCLAW_PRIVATE_DIR}/PROMPT_REVIEW_TEMPLATE.md:/home/node/.openclaw/workspace/PROMPT_REVIEW_TEMPLATE.md:ro"
       - "${CLOUDCLAW_GEMINI_CLI_DIR}:/opt/gemini-cli:ro"
       - "${CLOUDCLAW_WRAPPER_PATH}:/usr/local/bin/gemini:ro"
       - "${CLOUDCLAW_LIFE_SYSTEM_DIR}:${CLOUDCLAW_LIFE_SYSTEM_MOUNT}:ro"

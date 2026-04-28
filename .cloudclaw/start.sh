@@ -13,6 +13,13 @@ OVERRIDE="$SCRIPT_DIR/docker-compose.override.yml"
 if [[ ! -f "$BASE" ]];     then echo "missing $BASE" >&2; exit 1; fi
 if [[ ! -f "$OVERRIDE" ]]; then echo "missing $OVERRIDE" >&2; exit 1; fi
 
+if [[ -f "$ROOT_DIR/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 if [[ -f "$SCRIPT_DIR/env.local" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -51,6 +58,7 @@ export CLOUDCLAW_LIFE_SYSTEM_DIR="${CLOUDCLAW_LIFE_SYSTEM_DIR:-$(cd "$WORKSPACE_
 export CLOUDCLAW_LIFE_SYSTEM_MOUNT="${CLOUDCLAW_LIFE_SYSTEM_MOUNT:-/home/node/.openclaw/workspace/人生系统}"
 export CLOUDCLAW_GEMINI_HOME_DIR="${CLOUDCLAW_GEMINI_HOME_DIR:-$HOME/.gemini}"
 export CLOUDCLAW_GEMINI_CLI_DIR="$(resolve_gemini_cli_dir)"
+export OPENCLAW_WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-$HOME/.openclaw/workspace}"
 
 for required_path in \
   "$CLOUDCLAW_PRIVATE_DIR" \
@@ -62,6 +70,41 @@ for required_path in \
     exit 1
   fi
 done
+
+for required_private_file in \
+  SOUL.md \
+  USER.md \
+  AGENTS.md \
+  HEARTBEAT.md \
+  MEMORY_PROTOCOL.md \
+  SELF_REVIEW.md \
+  PROMPT_REVIEW_TEMPLATE.md; do
+  if [[ ! -f "$CLOUDCLAW_PRIVATE_DIR/$required_private_file" ]]; then
+    echo "missing required CloudClaw private file: $CLOUDCLAW_PRIVATE_DIR/$required_private_file" >&2
+    exit 1
+  fi
+done
+
+prepare_workspace_mountpoints() {
+  mkdir -p "$OPENCLAW_WORKSPACE_DIR"
+  for mount_file in \
+    SOUL.md \
+    USER.md \
+    AGENTS.md \
+    HEARTBEAT.md \
+    MEMORY_PROTOCOL.md \
+    SELF_REVIEW.md \
+    PROMPT_REVIEW_TEMPLATE.md; do
+    [[ -e "$OPENCLAW_WORKSPACE_DIR/$mount_file" ]] || : > "$OPENCLAW_WORKSPACE_DIR/$mount_file"
+  done
+
+  mkdir -p \
+    "$OPENCLAW_WORKSPACE_DIR/对话纪要" \
+    "$OPENCLAW_WORKSPACE_DIR/周度报告" \
+    "$OPENCLAW_WORKSPACE_DIR/提案"
+}
+
+prepare_workspace_mountpoints
 
 cd "$ROOT_DIR"
 COMPOSE=(docker compose --env-file "$ROOT_DIR/.env" -f "$BASE" -f "$OVERRIDE")
